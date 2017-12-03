@@ -13,7 +13,7 @@ type Ev struct {
 	Host                           string
 	DataHandler                    DataHandlerFunc
 	TickHandler                    TickHandlerFunc
-	UnexpectedDisconnectionHandler UnexpectedDisconnectionHandler
+	UnexpectedDisconnectionHandler UnexpectedDisconnectionFunc
 	ShutdownFlag                   bool
 }
 
@@ -28,13 +28,13 @@ type ConnInfo struct {
 
 type DataHandlerFunc func(in []byte, connInfo *ConnInfo)
 type TickHandlerFunc func() (delay time.Duration)
-type UnexpectedDisconnectionHandler func(in []byte, connInfo *ConnInfo)
+type UnexpectedDisconnectionFunc func(in []byte, connInfo *ConnInfo)
 
 const (
 	DefaultTickDelayDuration = time.Millisecond * 100
 )
 
-func New(host string, dataHandler DataHandlerFunc, tickHandler TickHandlerFunc, unexpectedDisconnectionHandler UnexpectedDisconnectionHandler) *Ev {
+func New(host string, dataHandler DataHandlerFunc, tickHandler TickHandlerFunc, unexpectedDisconnectionHandler UnexpectedDisconnectionFunc) *Ev {
 	return &Ev{
 		Conn:                           Conn{},
 		Host:                           host,
