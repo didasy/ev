@@ -8,12 +8,13 @@ import (
 )
 
 type Ev struct {
-	Server       evio.Server
-	Conn         Conn
-	Host         string
-	DataHandler  DataHandlerFunc
-	TickHandler  TickHandlerFunc
-	ShutdownFlag bool
+	Server                         evio.Server
+	Conn                           Conn
+	Host                           string
+	DataHandler                    DataHandlerFunc
+	TickHandler                    TickHandlerFunc
+	UnexpectedDisconnectionHandler UnexpectedDisconnectionHandler
+	ShutdownFlag                   bool
 }
 
 type Conn map[int]*ConnInfo
@@ -27,17 +28,19 @@ type ConnInfo struct {
 
 type DataHandlerFunc func(in []byte, connInfo *ConnInfo)
 type TickHandlerFunc func() (delay time.Duration)
+type UnexpectedDisconnectionHandler func(in []byte, connInfo *ConnInfo)
 
 const (
 	DefaultTickDelayDuration = time.Millisecond * 100
 )
 
-func New(host string, dataHandler DataHandlerFunc, tickHandler TickHandlerFunc) *Ev {
+func New(host string, dataHandler DataHandlerFunc, tickHandler TickHandlerFunc, unexpectedDisconnectionHandler UnexpectedDisconnectionHandler) *Ev {
 	return &Ev{
-		Conn:        Conn{},
-		Host:        host,
-		DataHandler: dataHandler,
-		TickHandler: tickHandler,
+		Conn:                           Conn{},
+		Host:                           host,
+		DataHandler:                    dataHandler,
+		TickHandler:                    tickHandler,
+		UnexpectedDisconnectionHandler: unexpectedDisconnectionHandler,
 	}
 }
 
@@ -89,7 +92,9 @@ func data(e *Ev) func(id int, in []byte) (out []byte, action evio.Action) {
 
 			ok := e.Server.Wake(id)
 			if !ok {
-				panic("Failed to wake server up, client may already be disconnected")
+				// client already disconnected
+				// do something
+				e.UnexpectedDisconnectionHandler(in, e.Conn[id])
 			}
 		}()
 
