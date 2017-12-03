@@ -1,0 +1,10 @@
+hash: bc574862af2f3e32f73c0ba1d1d462480c3437b768ffad63b7dd3721b6b3aed5
+updated: 2017-12-03T16:46:57.279218213+07:00
+imports:
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+- name: github.com/tidwall/evio
+  version: e07d3a91f8535be50cb5e0b7fc6cab53ba8c114c
+  subpackages:
+  - internal
+testImports: []
