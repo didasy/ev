@@ -18,10 +18,10 @@ func main() {
 }
 
 func dataHandler(connInfo *ev.ConnInfo) {
-	_, body, err := ev.GetHTTPRequest(connInfo.Input)
+	req, body, err := ev.GetHTTPRequest(connInfo.Input)
 	if err != nil {
 		panic(err)
 	}
 
-	connInfo.Output = ev.NewRawHTTPResponse(200, "application/json", body)
+	connInfo.Output = ev.NewRawHTTPResponse(200, req.Header.Get("Content-Type"), body)
 }
