@@ -18,12 +18,12 @@ var (
 	evObj *ev.Ev
 )
 
-func dataHandler(in []byte, connInfo *ev.ConnInfo) {
-	connInfo.Output = in
+func dataHandler(connInfo *ev.ConnInfo) {
+	connInfo.Output = connInfo.Input
 }
 
-func unexpectedDisconnectionHandler(in []byte, connInfo *ev.ConnInfo) {
-	connInfo.Output = in
+func unexpectedDisconnectionHandler(connInfo *ev.ConnInfo) {
+	connInfo.Output = connInfo.Input
 }
 
 func tickHandler() (delay time.Duration) {
@@ -38,11 +38,12 @@ func TestNew(t *testing.T) {
 }
 
 func TestDataHandler(t *testing.T) {
-	in := []byte(InputText)
-	connInfo := &ev.ConnInfo{}
-	evObj.DataHandler(in, connInfo)
+	connInfo := &ev.ConnInfo{
+		Input: []byte(InputText),
+	}
+	evObj.DataHandler(connInfo)
 
-	assert.Equal(t, in, connInfo.Output)
+	assert.Equal(t, connInfo.Input, connInfo.Output)
 }
 
 func TestTickHandler(t *testing.T) {
@@ -52,11 +53,12 @@ func TestTickHandler(t *testing.T) {
 }
 
 func TestUnexpectedDisconnectionHandler(t *testing.T) {
-	in := []byte(InputText)
-	connInfo := &ev.ConnInfo{}
-	evObj.UnexpectedDisconnectionHandler(in, connInfo)
+	connInfo := &ev.ConnInfo{
+		Input: []byte(InputText),
+	}
+	evObj.UnexpectedDisconnectionHandler(connInfo)
 
-	assert.Equal(t, in, connInfo.Output)
+	assert.Equal(t, connInfo.Input, connInfo.Output)
 }
 
 func TestListen(t *testing.T) {
