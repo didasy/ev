@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"github.com/JesusIslam/ev"
 )
@@ -18,14 +17,11 @@ func main() {
 	}
 }
 
-func dataHandler(in []byte, connInfo *ev.ConnInfo) {
-	_, body, err := ev.GetHTTPRequest(in)
+func dataHandler(connInfo *ev.ConnInfo) {
+	_, body, err := ev.GetHTTPRequest(connInfo.Input)
 	if err != nil {
 		panic(err)
 	}
-
-	// emulate work
-	<-time.After(time.Second)
 
 	connInfo.Output = ev.NewRawHTTPResponse(200, "application/json", body)
 }

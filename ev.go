@@ -24,14 +24,15 @@ type Conn map[int]*ConnInfo
 
 type ConnInfo struct {
 	ID            int
+	Input         []byte
 	Output        []byte
 	LocalAddress  net.Addr
 	RemoteAddress net.Addr
 }
 
-type DataHandlerFunc func(in []byte, connInfo *ConnInfo)
+type DataHandlerFunc func(connInfo *ConnInfo)
 type TickHandlerFunc func() (delay time.Duration)
-type UnexpectedDisconnectionFunc func(in []byte, connInfo *ConnInfo)
+type UnexpectedDisconnectionFunc func(connInfo *ConnInfo)
 
 const (
 	DefaultTickDelayDuration = time.Millisecond * 100
@@ -108,14 +109,29 @@ func data(e *Ev) func(id int, in []byte) (out []byte, action evio.Action) {
 
 		// or handle input
 		go func() {
-			e.DataHandler(in, e.Conn[id])
+			e.lock.Lock()
+			e.Conn[id].Input = in
+			// clone connInfo so we don't have to access the map directly and waiting for the lock
+			connInfo := &ConnInfo{
+				ID:            id,
+				Input:         in,
+				LocalAddress:  e.Conn[id].LocalAddress,
+				RemoteAddress: e.Conn[id].RemoteAddress,
+			}
+			e.lock.Unlock()
+
+			e.DataHandler(connInfo)
+
+			e.lock.Lock()
+			e.Conn[id].Output = connInfo.Output
+			e.lock.Unlock()
 
 			ok := e.Server.Wake(id)
 			if !ok {
 				// client already disconnected
 				// do something
 				if e.UnexpectedDisconnectionHandler != nil {
-					e.UnexpectedDisconnectionHandler(in, e.Conn[id])
+					e.UnexpectedDisconnectionHandler(connInfo)
 				}
 			}
 		}()
