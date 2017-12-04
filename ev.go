@@ -2,6 +2,7 @@ package ev
 
 import (
 	"net"
+	"sync"
 	"time"
 
 	"github.com/tidwall/evio"
@@ -14,7 +15,9 @@ type Ev struct {
 	DataHandler                    DataHandlerFunc
 	TickHandler                    TickHandlerFunc
 	UnexpectedDisconnectionHandler UnexpectedDisconnectionFunc
-	ShutdownFlag                   bool
+	shutdownFlag                   bool
+	closeAfterRespond              bool
+	lock                           sync.Mutex
 }
 
 type Conn map[int]*ConnInfo
@@ -44,8 +47,12 @@ func New(host string, dataHandler DataHandlerFunc, tickHandler TickHandlerFunc, 
 	}
 }
 
+func (e *Ev) SetCloseAfterRespond(set bool) {
+	e.closeAfterRespond = set
+}
+
 func (e *Ev) Shutdown() {
-	e.ShutdownFlag = true
+	e.shutdownFlag = true
 }
 
 func (e *Ev) Listen() (err error) {
@@ -68,11 +75,13 @@ func serving(e *Ev) func(server evio.Server) (action evio.Action) {
 
 func opened(e *Ev) func(id int, info evio.Info) (out []byte, opts evio.Options, action evio.Action) {
 	return func(id int, info evio.Info) (out []byte, opts evio.Options, action evio.Action) {
+		e.lock.Lock()
 		e.Conn[id] = &ConnInfo{
 			ID:            id,
 			LocalAddress:  info.LocalAddr,
 			RemoteAddress: info.RemoteAddr,
 		}
+		e.lock.Unlock()
 
 		return
 	}
@@ -82,7 +91,18 @@ func data(e *Ev) func(id int, in []byte) (out []byte, action evio.Action) {
 	return func(id int, in []byte) (out []byte, action evio.Action) {
 		// handle wake up call
 		if in == nil {
-			out = e.Conn[id].Output
+			// copy result to output
+			out = make([]byte, len(e.Conn[id].Output))
+			copy(out, e.Conn[id].Output)
+			// close the connection to client after responding if set to
+			if e.closeAfterRespond {
+				// remove the current connection from map
+				e.lock.Lock()
+				delete(e.Conn, id)
+				e.lock.Unlock()
+				// set action to close
+				action = evio.Close
+			}
 			return
 		}
 
@@ -94,7 +114,9 @@ func data(e *Ev) func(id int, in []byte) (out []byte, action evio.Action) {
 			if !ok {
 				// client already disconnected
 				// do something
-				e.UnexpectedDisconnectionHandler(in, e.Conn[id])
+				if e.UnexpectedDisconnectionHandler != nil {
+					e.UnexpectedDisconnectionHandler(in, e.Conn[id])
+				}
 			}
 		}()
 
@@ -104,7 +126,7 @@ func data(e *Ev) func(id int, in []byte) (out []byte, action evio.Action) {
 
 func tick(e *Ev) func() (delay time.Duration, action evio.Action) {
 	return func() (delay time.Duration, action evio.Action) {
-		if e.ShutdownFlag {
+		if e.shutdownFlag {
 			action = evio.Shutdown
 		}
 

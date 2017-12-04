@@ -9,4 +9,9 @@ A helper package to use
 
 ### How To Use
 
-See [example](https://github.com/JesusIslam/ev/tree/master/examples/example.go)
+See
+[simple example](https://github.com/JesusIslam/ev/tree/master/examples/simple/simple.go)
+and
+[http example](https://github.com/JesusIslam/ev/tree/master/examples/http/http.go)
+
+### TODO

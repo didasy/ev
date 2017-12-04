@@ -9,7 +9,7 @@ import (
 func main() {
 	host := "tcp://localhost:5000"
 	e := ev.New(host, dataHandler, nil, nil)
-	log.Println("Listening at port: ", host)
+	log.Println("Listening at: ", host)
 	err := e.Listen()
 	if err != nil {
 		panic(err)
