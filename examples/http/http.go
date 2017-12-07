@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 
 	"github.com/JesusIslam/ev"
@@ -17,7 +18,13 @@ func main() {
 }
 
 func dataHandler(connInfo *ev.ConnInfo) {
-	req, body, err := ev.GetHTTPRequest(connInfo.Input)
+	req, err := ev.GetHTTPRequest(connInfo.Input)
+	if err != nil {
+		panic(err)
+	}
+	defer req.Body.Close()
+
+	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		panic(err)
 	}

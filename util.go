@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -29,16 +28,10 @@ func SetHTTPStringFormat(format string) {
 	HTTPStringFormat = format
 }
 
-func GetHTTPRequest(req []byte) (httpReq *http.Request, body []byte, err error) {
+func GetHTTPRequest(req []byte) (httpReq *http.Request, err error) {
 	reader := bytes.NewReader(req)
 	br := bufio.NewReader(reader)
 	httpReq, err = http.ReadRequest(br)
-	if err != nil {
-		return
-	}
-	defer httpReq.Body.Close()
-
-	body, err = ioutil.ReadAll(httpReq.Body)
 	if err != nil {
 		return
 	}

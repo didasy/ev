@@ -1,6 +1,7 @@
 package ev_test
 
 import (
+	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -29,14 +30,18 @@ func TestNewRawHTTPResponse(t *testing.T) {
 }
 
 func TestGetHTTPRequest(t *testing.T) {
-	req, body, err := ev.GetHTTPRequest([]byte(RawHTTPRequest))
+	req, err := ev.GetHTTPRequest([]byte(RawHTTPRequest))
 	assert.Nil(t, err)
-	assert.Equal(t, InputText, string(body))
 	// assert the request's properties
 	assert.Equal(t, Method, req.Method)
 	assert.Equal(t, Protocol, req.Proto)
 	assert.Equal(t, HostName, req.Host)
 	assert.Equal(t, ContentTypeHeader, req.Header.Get(ContentTypeHeaderKey))
+
+	defer req.Body.Close()
+	body, err := ioutil.ReadAll(req.Body)
+	assert.Nil(t, err)
+	assert.Equal(t, InputText, string(body))
 }
 
 func TestSetHTTPStringFormat(t *testing.T) {

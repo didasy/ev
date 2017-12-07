@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/tidwall/evio"
@@ -24,7 +23,6 @@ type Ev struct {
 	UnexpectedDisconnectionHandler UnexpectedDisconnectionFunc
 	shutdownFlag                   bool
 	closeAfterRespond              bool
-	lock                           sync.Mutex
 	queue                          chan *Queue
 }
 
@@ -70,7 +68,7 @@ func New(host string, dataHandler DataHandlerFunc, tickHandler TickHandlerFunc, 
 		DataHandler:                    dataHandler,
 		TickHandler:                    tickHandler,
 		UnexpectedDisconnectionHandler: unexpectedDisconnectionHandler,
-		queue: make(chan *Queue, math.MaxUint16),
+		queue: make(chan *Queue, math.MaxUint16), // make this user settable?
 	}
 }
 
@@ -131,12 +129,10 @@ func opened(e *Ev) func(id int, info evio.Info) (out []byte, opts evio.Options, 
 		// log.Printf("Connected user with id %d and address %s\n", id, info.RemoteAddr.String())
 
 		// add new connection to map
-		e.lock.Lock()
 		e.Conn[id] = &ConnInfo{
 			ID:   id,
 			Info: info,
 		}
-		e.lock.Unlock()
 
 		return
 	}
@@ -147,9 +143,7 @@ func closed(e *Ev) func(id int, err error) (action evio.Action) {
 		// log.Printf("Disconnected user with id %d and address %s\n", id, e.Conn[id].RemoteAddress.String())
 
 		// remove the current connection from map
-		e.lock.Lock()
 		delete(e.Conn, id)
-		e.lock.Unlock()
 
 		return
 	}

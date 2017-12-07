@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Host         = "tcp://localhost:5000"
+	Host         = ":5000"
 	InputText    = "test"
 	DefaultDelay = time.Millisecond * 100
 )
