@@ -1,4 +1,4 @@
-package: github.com/JesusIslam/eviotest
+package: github.com/JesusIslam/ev
 import:
 - package: github.com/tidwall/evio
 - package: github.com/stretchr/testify

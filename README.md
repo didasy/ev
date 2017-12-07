@@ -22,3 +22,5 @@ See
 
 * Make this pluggable with Gin (I still don't know how to make
   http.ResponseWriter to feed Gin engine to)
+
+* Support TLS
